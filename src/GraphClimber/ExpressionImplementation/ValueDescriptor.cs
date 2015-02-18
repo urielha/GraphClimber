@@ -8,7 +8,7 @@ namespace GraphClimber
         private readonly MemberLocal<TField, TRuntime> _member;
         private readonly IClimbStore _climbStore;
         private readonly object _processor;
-        protected object _owner;
+        private readonly object _owner;
 
         protected ValueDescriptor(object processor, object owner, MemberLocal<TField, TRuntime> member, IClimbStore climbStore)
         {
@@ -81,6 +81,9 @@ namespace GraphClimber
                         ClimbStore.GetStructClimb<TField>(type);
 
                     climbDelegate(_processor, ref value);
+
+                    // TODO : Maybe call this.Set(), From the outside?
+                    Member.Setter(Owner, value);
                 }
             }
 

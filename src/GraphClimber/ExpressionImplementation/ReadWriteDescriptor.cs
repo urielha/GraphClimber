@@ -131,11 +131,6 @@ namespace GraphClimber
         {
             TField value = Get();
             base.Climb(ref value);
-
-            if (value.GetType().IsValueType)
-            {
-                Set(value);
-            }
         }
     }
 }
