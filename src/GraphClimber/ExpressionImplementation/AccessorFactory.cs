@@ -21,16 +21,11 @@ namespace GraphClimber
 
             Expression<Action<object, T>> lambda =
                 Expression.Lambda<Action<object, T>>
-                    (GetSetterBody(member, instance, value),
+                    (member.GetSetExpression(GetValue(member, instance), value),
                         "Setter_" + member.Name,
                         new[] {instance, value});
 
             return _compiler.Compile(lambda);
-        }
-
-        private static Expression GetSetterBody(IStateMember member, ParameterExpression instance, ParameterExpression value)
-        {
-            return member.GetSetExpression(GetValue(member, instance), value);
         }
 
         private static Expression GetValue(IStateMember member, ParameterExpression instance)
