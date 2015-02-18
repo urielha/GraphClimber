@@ -106,6 +106,7 @@ namespace GraphClimber
 
         private static void SerializeDeserializeBinary()
         {
+
             var person = GetPerson2();
 
             var stateMemberProvider = new BinaryStateMemberProvider(_stateMemberProvider);
@@ -116,10 +117,13 @@ namespace GraphClimber
             var stream = new MemoryStream();
             var binaryWriterProcessor = new BinaryWriterProcessor(new SuperBinaryWriter(stream));
 
+            var debugExpressionCompiler = new DebugExpressionCompiler((IExpressionDescriber)Type.GetType("GraphClimber.Debug.ExpressionCompiler.CSharpExpressionDescriber, GraphClimber.Debug, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null").GetField("Empty").GetValue(null));
+            var compiler = new FallbackExpressionCompiler(debugExpressionCompiler, new TrivialExpressionCompiler());
+
             ClimbStore store2 = new ClimbStore(binaryWriterProcessor.GetType(),
                 new BinaryStateMemberProvider(new PropertyStateMemberProvider()),
                 new MethodMapper(),
-                new DebugExpressionCompiler((IExpressionDescriber)Type.GetType("GraphClimber.Debug.ExpressionCompiler.CSharpExpressionDescriber, GraphClimber.Debug, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null").GetField("Empty").GetValue(null)));
+                compiler);
 
             ClimbDelegate<StrongBox<object>> climb2 = 
                 store2.GetClimb<StrongBox<object>>(typeof(StrongBox<object>));
@@ -137,7 +141,7 @@ namespace GraphClimber
             ClimbStore store = new ClimbStore(binaryReaderProcessor.GetType(),
                 new BinaryStateMemberProvider(new PropertyStateMemberProvider()), 
                 new MethodMapper(),
-                new TrivialExpressionCompiler());
+                compiler);
 
             ClimbDelegate<StrongBox<object>> climb = store.GetClimb<StrongBox<object>>(typeof (StrongBox<object>));
 

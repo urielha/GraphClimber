@@ -21,11 +21,21 @@ namespace GraphClimber
 
             Expression<Action<object, T>> lambda =
                 Expression.Lambda<Action<object, T>>
-                    (member.GetSetExpression(instance, value),
+                    (member.GetSetExpression(GetValue(member, instance), value),
                         "Setter_" + member.Name,
                         new[] {instance, value});
 
             return _compiler.Compile(lambda);
+        }
+
+        private static Expression GetValue(IStateMember member, ParameterExpression instance)
+        {
+            if (member.OwnerType.IsValueType)
+            {
+                return Expression.Field(instance.Convert(typeof(FastBox<>).MakeGenericType(member.OwnerType)), "Value");    
+            }
+
+            return instance;
         }
 
         public Func<object, T> GetGetter<T>(IStateMember member)
@@ -36,7 +46,7 @@ namespace GraphClimber
                 Expression.Lambda<Func<object, T>>
                     (
                         // We need to convert to the type, since sometimes we fake the member type.
-                        member.GetGetExpression(instance).Convert(typeof (T)),
+                        member.GetGetExpression(GetValue(member, instance)).Convert(typeof(T)),
                         "Getter_" + member.Name,
                         new[] {instance});
 

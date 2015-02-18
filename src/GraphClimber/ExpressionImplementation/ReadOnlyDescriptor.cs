@@ -21,9 +21,9 @@ namespace GraphClimber
         public override void Climb()
         {
             // TODO: Maybe this value should be passed via ctor.
-            TRuntime value = Get();
+            TField value = Get();
 
-            Climb(value);
+            Climb(ref value);
         }
     }
 }
