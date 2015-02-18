@@ -41,17 +41,41 @@ namespace GraphClimber
 
         private ClimbDelegate<T> CreateObjectDelegate<T>(Type runtimeType)
         {
-            var processor = Expression.Parameter(typeof(object), "processor");
             var value = Expression.Parameter(typeof (T), "value");
-
-            Expression castedProcessor = processor.Convert(_processorType);
             Expression owner = value.Convert(runtimeType);
+
+            return GetClimbDelegate<ClimbDelegate<T>>(runtimeType, owner, value);
+        }
+
+        public StructClimbDelegate<TField> CreateStructDelegate<TField>(Type runtimeType)
+        {
+            var value = Expression.Parameter(typeof (TField).MakeByRefType(), "value");
+            var owner = value.Convert(runtimeType);
+
+            return GetClimbDelegate<StructClimbDelegate<TField>>(runtimeType, owner, value);
+        }
+
+        private TDelegate GetClimbDelegate<TDelegate>(Type runtimeType, Expression owner, ParameterExpression value)
+        {
+            var processor = Expression.Parameter(typeof (object), "processor");
+            Expression castedProcessor = processor.Convert(_processorType);
 
             IEnumerable<IStateMember> members =
                 _stateMemberProvider.Provide(runtimeType);
 
             List<Expression> expressions = new List<Expression>();
             List<ParameterExpression> descriptorVariables = new List<ParameterExpression>();
+
+            Expression ownerValue = owner;
+
+            if (value.IsByRef)
+            {
+                var variable = Expression.Parameter(typeof(FastBox<>).MakeGenericType(runtimeType), "boxedValue");
+                descriptorVariables.Add(variable);
+                expressions.Add(Expression.Assign(variable, Expression.New(typeof(FastBox<>).MakeGenericType(owner.Type).GetConstructors()[0], owner)));
+                owner = variable;
+                ownerValue = Expression.Field(owner, "Value");
+            }
 
             foreach (IStateMember member in members)
             {
@@ -61,22 +85,27 @@ namespace GraphClimber
                     writer.GetDescriptor(castedProcessor, owner, member, member.MemberType);
 
                 Expression callProcessor =
-                    _mutator.GetExpression(castedProcessor, owner, member, descriptor.Reference);
+                    _mutator.GetExpression(castedProcessor, ownerValue, member, descriptor.Reference);
 
                 descriptorVariables.Add(descriptor.Reference);
                 expressions.Add(descriptor.Declaration);
                 expressions.Add(callProcessor);
             }
 
-            BlockExpression climbBody = 
+            if (value.IsByRef)
+            {
+                expressions.Add(Expression.Assign(value, ownerValue.Convert(value.Type)));
+            }
+
+            BlockExpression climbBody =
                 Expression.Block(descriptorVariables, expressions);
 
-            Expression<ClimbDelegate<T>> lambda =
-                Expression.Lambda<ClimbDelegate<T>>(climbBody,
+            Expression<TDelegate> lambda =
+                Expression.Lambda<TDelegate>(climbBody,
                     "Climb_" + runtimeType.Name,
                     new[] {processor, value});
 
-            ClimbDelegate<T> result = _compiler.Compile(lambda);
+            TDelegate result = _compiler.Compile(lambda);
 
             return result;
         }

@@ -41,6 +41,12 @@ namespace GraphClimber
                 Expression.Assign(runtimeType, memberTypeConstant),
                 Expression.Assign(runtimeType, Expression.Call(value, _getTypeMethod)));
 
+            var ownerMember = owner as MemberExpression;
+            if (ownerMember != null && ownerMember.Expression.Type.IsGenericType && ownerMember.Expression.Type.GetGenericTypeDefinition() == typeof(FastBox<>))
+            {
+                owner = ownerMember.Expression;
+            }
+
             var routeCall =
                 Expression.Call(descriptor,
                     _routeMethod,

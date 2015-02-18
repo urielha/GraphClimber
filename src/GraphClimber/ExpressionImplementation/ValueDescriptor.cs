@@ -7,8 +7,8 @@ namespace GraphClimber
     {
         private readonly MemberLocal<TField, TRuntime> _member;
         private readonly IClimbStore _climbStore;
-        private readonly object _owner;
         private readonly object _processor;
+        protected object _owner;
 
         protected ValueDescriptor(object processor, object owner, MemberLocal<TField, TRuntime> member, IClimbStore climbStore)
         {
@@ -52,7 +52,7 @@ namespace GraphClimber
 
         public abstract void Climb();
 
-        protected void Climb(TField value)
+        protected void Climb(ref TField value)
         {
             if (value == null)
             {
@@ -68,10 +68,20 @@ namespace GraphClimber
             }
             else
             {
-                ClimbDelegate<TField> climbDelegate = 
+                if (!type.IsValueType)
+                {
+                    ClimbDelegate<TField> climbDelegate =
                     ClimbStore.GetClimb<TField>(type);
 
-                climbDelegate(_processor, value);
+                    climbDelegate(_processor, value);
+                }
+                else
+                {
+                    StructClimbDelegate<TField> climbDelegate =
+                        ClimbStore.GetStructClimb<TField>(type);
+
+                    climbDelegate(_processor, ref value);
+                }
             }
 
         }

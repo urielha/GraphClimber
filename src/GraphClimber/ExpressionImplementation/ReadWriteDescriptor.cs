@@ -109,7 +109,7 @@ namespace GraphClimber
         public void Set(TField value)
         {
             _setCalled = true;
-            Member.Setter(this.Owner, value);
+            Member.Setter(Owner, value);
         }
 
         public TField Get()
@@ -130,7 +130,12 @@ namespace GraphClimber
         public override void Climb()
         {
             TField value = Get();
-            base.Climb(value);
+            base.Climb(ref value);
+
+            if (value.GetType().IsValueType)
+            {
+                Set(value);
+            }
         }
     }
 }

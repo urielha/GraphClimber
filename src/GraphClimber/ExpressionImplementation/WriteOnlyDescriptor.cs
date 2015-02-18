@@ -27,7 +27,7 @@ namespace GraphClimber
                 throw new Exception("This is a write-only descriptor. Calling Set() is required before calling Climb().");
             }
 
-            base.Climb(_newValue);
+            base.Climb(ref _newValue);
         }
     }
 }

@@ -8,6 +8,7 @@ namespace GraphClimber
         private readonly AccessorDelegateCache _setters = new AccessorDelegateCache();
         private readonly AccessorDelegateCache _getters = new AccessorDelegateCache();
         private readonly ClimbDelegateCache _climbs = new ClimbDelegateCache();
+        private readonly ClimbDelegateCache _structClimbs = new ClimbDelegateCache();
         private readonly RouteDelegateCache _routes = new RouteDelegateCache();
 
         private readonly IAccessorFactory _accessorFactory;
@@ -47,6 +48,13 @@ namespace GraphClimber
             return _climbs.GetOrAdd(typeof (TField), runtimeType,
                 (typeKey, runtimeTypeKey) => 
                     _climbFactory.CreateDelegate<TField>(runtimeTypeKey));
+        }
+
+        public StructClimbDelegate<TField> GetStructClimb<TField>(Type runtimeType)
+        {
+            return _structClimbs.GetOrAdd(null, runtimeType,
+                (typeKey, runtimeTypeKey) =>
+                    _climbFactory.CreateStructDelegate<TField>(runtimeTypeKey));
         }
     }
 }
